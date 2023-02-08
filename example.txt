@@ -1,0 +1,127 @@
+//
+//  ContentView.swift
+//  Notes App (IOS)
+//
+//  Created by Hilary Aghasili on 04/02/2023.
+//
+
+import SwiftUI
+
+    
+struct ContentView: View {
+    
+    
+    
+    init() {
+        //Use this if NavigationBarTitle is with Large Font
+        UINavigationBar.appearance().largeTitleTextAttributes = [.foregroundColor: UIColor.darkGray]
+
+        //Use this if NavigationBarTitle is with displayMode = .inline
+        UINavigationBar.appearance().titleTextAttributes = [.foregroundColor: UIColor.darkGray]
+        
+    }
+    
+    @State var items = [Items]()
+    var body: some View {
+        
+        NavigationView {
+            List(self.items){ item in
+                Text("\(item.name)")
+                    .padding()
+            }
+            .onAppear(perform:{
+                fetchItems()
+            })
+            .navigationTitle("Expense Notes")
+            .foregroundColor(.black)
+            
+            .navigationBarItems(trailing: Button(action:{
+                print("Add Expense")
+            }, label: {
+                Text("Add")
+                    .bold()
+                    .foregroundColor(.green)
+            }))
+            
+            
+        }
+    }
+        
+func fetchItems() {
+            let url = URL(string: "http://127.0.0.1:8000/getItems/")!
+            
+            let task = URLSession.shared.dataTask(with: url){ data, res, err in guard let data = data else {return}
+                
+                do{
+                    let items = try JSONDecoder().decode([Items].self, from: data)
+                    self.items = items
+                }
+                catch{
+                    print(error)
+                }
+                
+            }
+    task.resume()
+        }
+    }
+    
+    
+    struct Items: Identifiable, Codable {
+    var id :Int
+    var name :String
+    var content :String
+    }
+                        
+    
+    
+    
+    struct ContentView_Previews: PreviewProvider {
+        static var previews: some View {
+            ContentView()
+        }
+    }
+    
+
+
+
+ // Post Item from API Endpoint
+    func PostNote(){
+        let params = ["Title": name, "Content": text] as [String: Any]
+        
+        let myUrl = URL(string: "http://127.0.0.1:8000/addItem/")
+        
+        let session = URLSession.shared
+        
+        var request = URLRequest(url: myUrl!)
+        
+        request.httpMethod = "POST"
+        
+        do{
+            request.httpBody = try JSONSerialization.data(withJSONObject: params, options: .prettyPrinted)
+
+        }
+        catch let error{
+            print(error)
+        }
+        
+        request.addValue("application/json", forHTTPHeaderField: "Content")
+        request.addValue("application/json", forHTTPHeaderField: "Accept")
+        
+        let task = session.dataTask(with: request) { data, res, err in
+            guard err == nil else {return}
+            
+            guard let data = data else {return}
+            
+            do{
+                if let json = try JSONSerialization.jsonObject(with: data, options: .mutableContainers) as? [String: Any]{
+                    print(json)
+                }
+            }
+            catch let error{
+                print(error)
+            }
+        }
+
+        task.resume()
+    }
+}
