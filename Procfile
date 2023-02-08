@@ -1,2 +1,2 @@
-web: gunicorn RESTapi.wsgi  --log-file 
+web: gunicorn RESTapi.wsgi  --log-file -
 
